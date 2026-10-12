@@ -1,76 +1,108 @@
-# 🍽️ Restaurantly - Restaurant SSR Web Application
+# Restaurantly - Restaurant SSR Web Application
 
-Ứng dụng web nhà hàng hoàn chỉnh theo mô hình **Server-Side Rendering (SSR thuần túy - Zero Client-Side JS)** được xây dựng bằng **Node.js**, **Express.js**, **EJS**, **Tailwind CSS**, và **Prisma ORM** kết nối **PostgreSQL (Supabase)**.
+Ứng dụng web nhà hàng theo mô hình **Server-Side Rendering (SSR)**, được xây dựng bằng **Node.js**, **Express.js**, **EJS**, **Tailwind CSS** và **Prisma ORM**, kết nối PostgreSQL trên Supabase.
 
-Giao diện được lấy cảm hứng và thiết kế theo mẫu **Restaurantly** (Dark & Gold Luxury Theme).
+Giao diện lấy cảm hứng từ mẫu Restaurantly với chủ đề Dark & Gold Luxury.
 
----
+## Tính năng
 
-## 🚀 Tính năng nổi bật
+### Kiến trúc
 
-### 1. Kiến trúc & Công nghệ
-- **Backend:** Node.js & Express.js.
-- **View Engine:** EJS (Embedded JavaScript) kết hợp Tailwind CSS & custom luxury styling.
-- **Database & ORM:** PostgreSQL kết nối qua Supabase Pooler, quản lý schema và migrations bằng Prisma ORM.
-- **SSR thuần túy (Zero Client JS):** 
-  - Không sử dụng `fetch`, `AJAX`, `axios` hay bất kỳ client-side script nào để gửi dữ liệu.
-  - Mọi thao tác đều dùng chuẩn HTML `<form>`.
-- **HTTP Methods & Method Override:**
-  - Hỗ trợ `PATCH` và `DELETE` từ form HTML thông qua `method-override` (`?_method=PATCH`, `?_method=DELETE`).
-  - Mọi thao tác ghi (Create, Update, Delete) đều redirect bằng mã **HTTP 303 See Other** để chống duplicate submit.
-  - Quy trình xóa có trang xác nhận bảo vệ dữ liệu.
-  - Xử lý lỗi validation với mã **HTTP 400 Bad Request** và giữ nguyên giá trị input người dùng (sticky form).
-  - Bắt lỗi **HTTP 404 Not Found** với trang thông báo chuyên biệt.
-- **Bảo mật:** Whitelist và sanitize từng trường dữ liệu trước khi tương tác với ORM, không in hoặc leak chuỗi `DATABASE_URL`.
+- Backend: Node.js và Express.js.
+- View engine: EJS.
+- Database và ORM: PostgreSQL (Supabase) với Prisma.
+- Mọi thao tác dữ liệu dùng HTML form và server-side rendering.
+- Không dùng `fetch`, AJAX hoặc axios cho nghiệp vụ CRUD.
+- Hỗ trợ PATCH và DELETE từ form HTML thông qua `method-override`.
+- Các thao tác Create, Update, Delete redirect bằng HTTP 303.
+- Validation trả HTTP 400 và giữ lại dữ liệu form không hợp lệ.
+- Có trang lỗi riêng cho HTTP 404 và HTTP 500.
+- Khu vực `/admin` hiện phục vụ mục đích học tập/demo và chưa có authentication/authorization.
 
-### 2. Chức năng Public
-- `GET /dishes`: Xem danh sách thực đơn món ăn, hỗ trợ tìm kiếm theo tên món bằng query param `q` (vd: `/dishes?q=phở`).
-- `GET /dishes/:id`: Xem chi tiết món ăn (phong cách Specials với đĩa tròn cao cấp).
+### Chức năng public
 
-### 3. Chức năng Quản trị (Admin CRUD)
-Xây dựng đầy đủ cụm route quản lý cho cả 3 bảng dữ liệu:
-- **Món ăn (Dishes):** `GET /admin/dishes`, `GET /admin/dishes/new`, `POST /admin/dishes`, `GET /admin/dishes/:id/edit`, `PATCH /admin/dishes/:id`, `GET /admin/dishes/:id/delete`, `DELETE /admin/dishes/:id`.
-- **Đầu bếp (Chefs):** Đầy đủ 6 route CRUD (`/admin/chefs...`).
-- **Nguyên liệu (Ingredients):** Đầy đủ 6 route CRUD (`/admin/ingredients...`).
+- `GET /`: Trang chủ nhà hàng.
+- `GET /menu`: Danh sách thực đơn.
+- `GET /menu?q=phở`: Tìm kiếm món ăn theo tên.
+- `GET /menu/:id`: Chi tiết món ăn.
+- `/dishes` và `/dishes/:id` vẫn được giữ để redirect tương thích sang route mới.
 
----
+### Chức năng admin
 
-## 🛠️ Hướng dẫn cài đặt và khởi chạy
+CRUD đầy đủ cho ba model:
 
-### 1. Clone repository
-```bash
-git clone https://github.com/Maverick0602/dev_web_w3.git
-cd dev_web_w3
-```
+- Dish: `/admin/dishes`
+- Chef: `/admin/chefs`
+- Ingredient: `/admin/ingredients`
 
-### 2. Cài đặt các gói phụ thuộc
-```bash
+Mỗi model hỗ trợ danh sách, thêm, sửa và xóa có trang xác nhận.
+
+## Cài đặt và chạy
+
+### 1. Cài dependency
+
+```powershell
+cd D:\Code_lab\WEB\W3\Block5\dev_web_w3
 npm install
 ```
 
-### 3. Cấu hình biến môi trường
-Tạo file `.env` từ file `.env.example`:
+### 2. Cấu hình biến môi trường
+
+Tạo `.env` từ `.env.example`, sau đó điền connection string PostgreSQL thật của Supabase:
+
 ```env
 PORT=3000
-DATABASE_URL="postgresql://username:password@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres"
+DATABASE_URL="postgresql://username:password@aws-0-region.pooler.supabase.com:5432/postgres"
 ```
 
-### 4. Đồng bộ Schema và Nạp dữ liệu mẫu
-```bash
-# Đẩy schema lên database
+Không commit hoặc chia sẻ `.env`. Nếu password database đã bị lộ, hãy đổi password trong Supabase.
+
+### 3. Đồng bộ schema
+
+```powershell
+npx prisma validate
+npx prisma generate
 npx prisma db push
-
-# Nạp dữ liệu mẫu (Seeding)
-npm run prisma:seed
 ```
 
-### 5. Khởi chạy Server
-```bash
-# Chạy môi trường production
-npm start
+Trường `Dish.price` là `Int`, biểu diễn giá nguyên bằng VNĐ.
 
-# Hoặc chạy môi trường phát triển (nodemon)
+### 4. Nạp dữ liệu mẫu
+
+Seed hiện tại có tác dụng reset dữ liệu trong ba bảng trước khi tạo dữ liệu mẫu. Chỉ chạy trên database development hoặc database đã được backup:
+
+```powershell
+$env:ALLOW_DESTRUCTIVE_SEED="true"; npm run prisma:seed
+```
+
+Nếu chưa đặt biến xác nhận, lệnh seed sẽ dừng và không xóa dữ liệu.
+
+### 5. Khởi chạy server
+
+```powershell
+npm start
+```
+
+Hoặc môi trường phát triển với nodemon:
+
+```powershell
 npm run dev
 ```
 
-Truy cập ứng dụng tại: [http://localhost:3000](http://localhost:3000)
+Mở trình duyệt tại [http://localhost:3000](http://localhost:3000).
+
+## Cấu trúc route public
+
+```text
+/                 Trang chủ
+/menu             Danh sách và tìm kiếm thực đơn
+/menu/:id         Chi tiết món ăn
+/dishes           Redirect tương thích sang /menu
+/dishes/:id       Redirect tương thích sang /menu/:id
+```
+
+## Ghi chú kỹ thuật
+
+- Project dùng `prisma db push` để đồng bộ schema trong phạm vi bài học; hiện chưa sử dụng versioned Prisma migrations.
+- `method-override` chỉ chuyển các form POST thành PATCH hoặc DELETE ở phía server.
+- Tailwind đang được tải qua CDN cho giao diện; nghiệp vụ dữ liệu vẫn chạy hoàn toàn qua HTML form và SSR.
