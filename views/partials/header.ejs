@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Restaurantly - Ẩm Thực Thượng Hạng' %></title>
+  
+  <!-- Google Fonts: Playfair Display & Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              DEFAULT: '#cda45e',
+              light: '#d9ba85',
+              dark: '#b38b46'
+            },
+            dark: {
+              bg: '#0c0b09',
+              card: '#1a1814',
+              elevated: '#151410',
+              border: '#28251f'
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['"Poppins"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Restaurantly Luxury Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-[#0c0b09] text-[#bab8b2] min-h-screen flex flex-col font-sans">
+
+  <!-- Top bar (Theo phong cách Restaurantly hình 1) -->
+  <div class="topbar hidden sm:block bg-black/80 py-2 border-b border-[#28251f] text-xs text-[#a8a59e]">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div class="flex items-center space-x-6">
+        <span><span class="text-[#cda45e] mr-1">📞</span> +84 90 123 4567</span>
+        <span><span class="text-[#cda45e] mr-1">⏰</span> Mở cửa: Thứ 2 - Chủ Nhật: 10:00 - 23:00</span>
+      </div>
+      <div>
+        <span class="text-white/80">Hệ thống ẩm thực đẳng cấp 5 sao</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Navigation -->
+  <header class="header-nav sticky top-0 z-50 bg-[#0c0b09]/95 backdrop-blur-md border-b border-[#28251f]">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/dishes" class="brand-logo text-2xl lg:text-3xl font-serif text-white tracking-wider">
+        Restaurantly<span class="text-[#cda45e]">.</span>
+      </a>
+
+      <nav class="flex items-center space-x-4 md:space-x-8">
+        <a href="/dishes" class="text-white hover:text-[#cda45e] transition text-sm font-medium tracking-wide">
+          Thực Đơn
+        </a>
+        <a href="/admin/dishes" class="text-white hover:text-[#cda45e] transition text-sm font-medium tracking-wide">
+          Quản Lý Món
+        </a>
+        <a href="/admin/chefs" class="text-white hover:text-[#cda45e] transition text-sm font-medium tracking-wide">
+          Đầu Bếp
+        </a>
+        <a href="/admin/ingredients" class="text-white hover:text-[#cda45e] transition text-sm font-medium tracking-wide">
+          Nguyên Liệu
+        </a>
+        <a href="/admin/dishes/new" class="btn-book hidden sm:inline-block">
+          + Thêm Món
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="content-area flex-1">
