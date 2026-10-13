@@ -2,6 +2,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
+    throw new Error('Seed này sẽ xóa dữ liệu hiện có. Đặt ALLOW_DESTRUCTIVE_SEED=true để xác nhận.');
+  }
+
   console.log('--- Đang dọn dẹp dữ liệu cũ (Reset data)... ---');
   await prisma.dish.deleteMany({});
   await prisma.chef.deleteMany({});

@@ -40,7 +40,7 @@ app.use((req, res) => {
 // Middleware xử lý lỗi hệ thống tập trung (500)
 app.use((err, req, res, next) => {
   console.error('Server Internal Error:', err.message);
-  res.status(500).render('404', {
+  res.status(500).render('500', {
     title: '500 - Lỗi máy chủ',
     message: 'Đã xảy ra sự cố từ máy chủ. Vui lòng thử lại sau.'
   });

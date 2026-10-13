@@ -1,9 +1,11 @@
 const prisma = require('../config/prisma');
 
-// [GET] /dishes - Danh sách món ăn cho khách, có tìm kiếm qua query param `q`
+// [GET] /menu - Danh sách món ăn cho khách, có tìm kiếm qua query param `q`
 exports.getDishes = async (req, res, next) => {
   try {
-    const q = req.query.q ? req.query.q.trim() : '';
+    const q = typeof req.query.q === 'string'
+      ? req.query.q.trim().slice(0, 100)
+      : '';
 
     const dishes = await prisma.dish.findMany({
       where: q
@@ -17,7 +19,7 @@ exports.getDishes = async (req, res, next) => {
       orderBy: { id: 'desc' }
     });
 
-    res.render('public/dishes-list', {
+    res.render('public/menu', {
       title: 'Thực Đơn Nhà Hàng',
       dishes,
       searchQuery: q
