@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restaurantly SSR · Thuyết trình Block 5</title>
+  <style>
+    :root {
+      --bg: #0b0a08;
+      --surface: #15130f;
+      --surface-2: #1e1a14;
+      --line: #3a3022;
+      --gold: #d6ad62;
+      --gold-soft: #f1d59c;
+      --text: #f6f0e5;
+      --muted: #b5aa98;
+      --green: #83c99c;
+      --red: #ef9b8f;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+    body { font-family: var(--sans); overflow: hidden; }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+
+    .deck { min-height: 100vh; position: relative; isolation: isolate; }
+    .deck::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(circle at 75% 18%, rgba(214,173,98,.11), transparent 26rem),
+        linear-gradient(115deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(25deg, rgba(255,255,255,.018) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, 68px 68px, 94px 94px, auto;
+    }
+    .deck::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(11,10,8,.9), transparent 28%, transparent 75%, rgba(11,10,8,.65));
+    }
+
+    .topline {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px clamp(20px, 5vw, 76px);
+      color: var(--muted);
+      font: 11px var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .brand { color: var(--gold); font-weight: 700; }
+    .slide-count { color: var(--muted); }
+
+    .slides { min-height: 100vh; }
+    .slide {
+      display: none;
+      min-height: 100vh;
+      padding: clamp(84px, 10vh, 120px) clamp(22px, 9vw, 150px) 105px;
+      position: relative;
+    }
+    .slide.active { display: flex; flex-direction: column; justify-content: center; animation: enter .35s ease both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .eyebrow { color: var(--gold); font: 12px var(--mono); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 22px; }
+    h1, h2, h3 { margin: 0; font-family: var(--serif); font-weight: 400; }
+    h1 { max-width: 980px; font-size: clamp(48px, 8vw, 112px); line-height: .94; letter-spacing: -.045em; }
+    h2 { max-width: 920px; font-size: clamp(38px, 5.3vw, 76px); line-height: 1; letter-spacing: -.035em; }
+    h3 { color: var(--gold-soft); font-size: clamp(20px, 2vw, 28px); }
+    .lead { max-width: 720px; margin: 25px 0 0; color: var(--muted); font-size: clamp(17px, 2vw, 24px); line-height: 1.5; }
+    .accent { color: var(--gold); }
+    .rule { width: 92px; height: 2px; margin: 26px 0; background: var(--gold); }
+    .meta { margin-top: 48px; color: var(--muted); font: 12px var(--mono); letter-spacing: .08em; }
+
+    .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .82fr); gap: clamp(30px, 7vw, 100px); align-items: start; margin-top: 38px; }
+    .three-col { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 35px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-top: 30px; }
+    .panel { border: 1px solid var(--line); background: rgba(30,26,20,.75); padding: clamp(18px, 2.2vw, 28px); }
+    .panel p, .panel li { color: var(--muted); line-height: 1.55; }
+    .panel ul { margin: 15px 0 0; padding-left: 18px; }
+    .panel strong { color: var(--text); }
+    .number { color: var(--gold); font: 12px var(--mono); }
+    .small { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .tag { display: inline-block; border: 1px solid rgba(214,173,98,.45); color: var(--gold-soft); padding: 6px 9px; font: 11px var(--mono); margin: 4px 4px 0 0; }
+
+    .flow { display: flex; align-items: stretch; gap: 8px; margin-top: 35px; flex-wrap: wrap; }
+    .flow > div { flex: 1 1 130px; min-width: 120px; padding: 18px 14px; border: 1px solid var(--line); background: var(--surface); }
+    .flow .arrow { flex: 0 0 auto; min-width: auto; border: 0; padding: 21px 0; background: transparent; color: var(--gold); font-size: 24px; }
+    .flow b { display: block; color: var(--gold-soft); font: 13px var(--mono); margin-bottom: 7px; }
+    .flow span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    table { border-collapse: collapse; width: 100%; margin-top: 28px; font-size: clamp(12px, 1.25vw, 16px); }
+    th, td { border-bottom: 1px solid var(--line); padding: 13px 12px; text-align: left; vertical-align: top; }
+    th { color: var(--gold); font: 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    td { color: var(--muted); }
+    td:first-child { color: var(--text); font-family: var(--mono); }
+    .ok { color: var(--green); }
+    .note { color: var(--gold-soft); }
+
+    pre { margin: 0; padding: 20px; overflow: auto; border: 1px solid var(--line); background: #0a0907; color: #e5d7bc; font: clamp(11px, 1.25vw, 15px)/1.6 var(--mono); white-space: pre-wrap; }
+    code { color: var(--gold-soft); font-family: var(--mono); }
+    .code-label { color: var(--muted); font: 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+
+    .steps { counter-reset: step; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 30px; }
+    .step { counter-increment: step; display: flex; gap: 15px; border-top: 1px solid var(--line); padding: 17px 0; color: var(--muted); line-height: 1.5; }
+    .step::before { content: counter(step, decimal-leading-zero); color: var(--gold); font: 13px var(--mono); }
+
+    .controls {
+      position: fixed; z-index: 20; left: clamp(20px, 5vw, 76px); right: clamp(20px, 5vw, 76px); bottom: 24px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .controls button, .toc-toggle {
+      border: 1px solid var(--line); background: rgba(21,19,15,.9); color: var(--muted); padding: 10px 13px;
+    }
+    .controls button:hover, .toc-toggle:hover { border-color: var(--gold); color: var(--gold-soft); }
+    .progress { flex: 1; height: 2px; background: var(--line); }
+    .progress i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .25s ease; }
+    .hint { color: #756c5e; font: 11px var(--mono); }
+    .toc-toggle { position: fixed; right: clamp(20px, 5vw, 76px); top: 58px; z-index: 21; font: 11px var(--mono); }
+    .toc {
+      display: none; position: fixed; z-index: 30; inset: 0; padding: 100px clamp(22px, 9vw, 150px); background: rgba(11,10,8,.97); overflow: auto;
+    }
+    .toc.open { display: block; }
+    .toc h2 { margin-bottom: 25px; }
+    .toc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 35px; max-width: 900px; }
+    .toc button { border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--muted); text-align: left; padding: 13px 0; }
+    .toc button:hover { color: var(--gold-soft); }
+    .close-toc { margin-bottom: 35px; border: 1px solid var(--line); background: transparent; color: var(--gold); padding: 9px 13px; }
+
+    @media (max-width: 720px) {
+      body { overflow: auto; }
+      .slide { min-height: 100svh; padding: 85px 22px 100px; }
+      .two-col, .three-col, .grid-4, .steps { grid-template-columns: 1fr; }
+      .flow { display: grid; grid-template-columns: 1fr; }
+      .flow .arrow { display: none; }
+      .topline { padding: 15px 20px; }
+      .toc-toggle { top: 48px; right: 20px; }
+      .hint { display: none; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+    @media print {
+      body { overflow: visible; background: white; color: black; }
+      .topline, .controls, .toc-toggle, .toc { display: none !important; }
+      .deck::before, .deck::after { display: none; }
+      .slide, .slide.active { display: flex; min-height: auto; page-break-after: always; padding: 25mm 15mm; color: black; }
+      .panel, pre { background: #f7f7f7; border-color: #bbb; }
+      .lead, .small, td, .panel p, .panel li { color: #333; }
+      h1, h2, h3, .panel strong, td:first-child { color: #111; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Slide thuyết trình Restaurantly SSR">
+    <header class="topline">
+      <span class="brand">Restaurantly / Block 5</span>
+      <span class="slide-count" id="slideCount">01 / 16</span>
+    </header>
+
+    <button class="toc-toggle" id="tocToggle" type="button">MỤC LỤC [M]</button>
+    <aside class="toc" id="toc" aria-label="Mục lục slide">
+      <button class="close-toc" id="closeToc" type="button">ĐÓNG [Esc]</button>
+      <div class="eyebrow">Restaurantly SSR · thuyết trình</div>
+      <h2>Nội dung trình bày</h2>
+      <div class="toc-grid" id="tocGrid"></div>
+    </aside>
+
+    <section class="slides">
+      <article class="slide active" data-title="Mở đầu">
+        <div class="eyebrow">Block 5 · SSR với database và ORM</div>
+        <h1>Restaurantly<br><span class="accent">SSR</span></h1>
+        <div class="rule"></div>
+        <p class="lead">Ứng dụng quản lý nhà hàng xây dựng bằng Node.js, Express, EJS và Prisma ORM, kết nối PostgreSQL trên Supabase.</p>
+        <p class="meta">THUYẾT TRÌNH ỨNG DỤNG · TIẾNG VIỆT</p>
+      </article>
+
+      <article class="slide" data-title="Bài toán và mục tiêu">
+        <div class="eyebrow">01 · Bối cảnh</div>
+        <h2>Một ứng dụng, hai luồng sử dụng</h2>
+        <div class="two-col">
+          <div class="panel"><span class="number">PUBLIC</span><h3>Khách truy cập</h3><p>Xem trang chủ, mở thực đơn, tìm kiếm món ăn và xem chi tiết một món bằng URL.</p></div>
+          <div class="panel"><span class="number">ADMIN</span><h3>Quản trị dữ liệu</h3><p>Quản lý Dish, Chef và Ingredient bằng form HTML, Prisma ORM và các route CRUD.</p></div>
+        </div>
+        <p class="lead">Mục tiêu của Block 5 là chứng minh được luồng từ browser đến database rồi quay lại browser bằng HTML được render phía server.</p>
+      </article>
+
+      <article class="slide" data-title="Công nghệ">
+        <div class="eyebrow">02 · Nền tảng</div>
+        <h2>Các mảnh ghép của hệ thống</h2>
+        <div class="grid-4">
+          <div class="panel"><span class="number">01</span><h3>Express</h3><p>Route, middleware và HTTP response.</p></div>
+          <div class="panel"><span class="number">02</span><h3>EJS</h3><p>Render HTML bằng dữ liệu từ controller.</p></div>
+          <div class="panel"><span class="number">03</span><h3>Prisma</h3><p>Model và truy vấn PostgreSQL.</p></div>
+          <div class="panel"><span class="number">04</span><h3>Supabase</h3><p>Database PostgreSQL thật trên cloud.</p></div>
+        </div>
+        <div class="panel" style="margin-top:14px"><span class="tag">Node.js</span><span class="tag">method-override</span><span class="tag">HTML form</span><span class="tag">SSR</span><span class="tag">PostgreSQL</span></div>
+      </article>
+
+      <article class="slide" data-title="Kiến trúc SSR">
+        <div class="eyebrow">03 · Luồng dữ liệu</div>
+        <h2>Browser không cần biết database ở đâu</h2>
+        <div class="flow">
+          <div><b>01 · Browser</b><span>Gửi GET hoặc submit form</span></div><div class="arrow">→</div>
+          <div><b>02 · Route</b><span>Khớp URL và method</span></div><div class="arrow">→</div>
+          <div><b>03 · Controller</b><span>Validate và quyết định dữ liệu</span></div><div class="arrow">→</div>
+          <div><b>04 · Prisma</b><span>Truy vấn model</span></div><div class="arrow">→</div>
+          <div><b>05 · EJS</b><span>Render HTML hoàn chỉnh</span></div>
+        </div>
+        <p class="lead">Handler quyết định lấy dữ liệu nào; template chỉ quyết định dữ liệu trông như thế nào.</p>
+      </article>
+
+      <article class="slide" data-title="Tách trang chủ và thực đơn">
+        <div class="eyebrow">04 · Public experience</div>
+        <h2>Trang chủ và thực đơn là hai điểm đến riêng</h2>
+        <div class="two-col">
+          <div class="panel"><span class="number">GET /</span><h3>Trang chủ</h3><p>Hero Restaurantly, slogan và phần “Why Choose Our Restaurant”. Không truy vấn toàn bộ danh sách món.</p><code>views/public/home.ejs</code></div>
+          <div class="panel"><span class="number">GET /menu</span><h3>Thực đơn</h3><p>Danh sách món, tìm kiếm bằng query parameter và link tới trang chi tiết.</p><code>views/public/menu.ejs</code></div>
+        </div>
+        <div class="panel" style="margin-top:14px"><span class="number">TƯƠNG THÍCH</span><p><code>/dishes</code> → <code>/menu</code> &nbsp; · &nbsp; <code>/dishes/:id</code> → <code>/menu/:id</code></p></div>
+      </article>
+
+      <article class="slide" data-title="Đọc dữ liệu">
+        <div class="eyebrow">05 · Read</div>
+        <h2>Path params và query params</h2>
+        <div class="two-col">
+          <div class="panel"><span class="number">QUERY PARAM</span><h3><code>/menu?q=phở</code></h3><p>Thay đổi cách hiển thị danh sách. Link kết quả tìm kiếm có thể lưu và chia sẻ.</p></div>
+          <div class="panel"><span class="number">PATH PARAM</span><h3><code>/menu/2</code></h3><p>Xác định một bản ghi cụ thể. Controller đọc ID, gọi <code>findUnique</code> và trả 404 nếu không tồn tại.</p></div>
+        </div>
+        <pre style="margin-top:16px">Browser → GET /menu/2
+route → controller → prisma.dish.findUnique({ where: { id: 2 } })
+→ EJS render dish-detail.ejs → HTML trả về browser</pre>
+      </article>
+
+      <article class="slide" data-title="Prisma schema">
+        <div class="eyebrow">06 · Database</div>
+        <h2>Model là nguồn mô tả dữ liệu</h2>
+        <div class="two-col">
+          <div>
+            <div class="code-label">prisma/schema.prisma</div>
+            <pre>model Dish {
+  id          Int @id @default(autoincrement())
+  name        String
+  description String
+  price       Int
+  category    String
+  available   Boolean @default(true)
+}</pre>
+          </div>
+          <div class="panel"><h3>Ba model độc lập</h3><p><strong>Dish</strong> quản lý món ăn và giá VNĐ nguyên.</p><p><strong>Chef</strong> quản lý tên và chuyên môn.</p><p><strong>Ingredient</strong> quản lý tên và đơn vị tính.</p><p class="note">Giá dùng Int thay vì Float để tránh sai số số thực.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="CRUD Dish">
+        <div class="eyebrow">07 · Create / Read / Update / Delete</div>
+        <h2>Một mẫu CRUD hoàn chỉnh</h2>
+        <table>
+          <thead><tr><th>Method</th><th>Route</th><th>Hành vi</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td>/admin/dishes</td><td>Danh sách món</td></tr>
+            <tr><td>GET</td><td>/admin/dishes/new</td><td>Hiển thị form thêm</td></tr>
+            <tr><td>POST</td><td>/admin/dishes</td><td>Tạo món mới</td></tr>
+            <tr><td>GET</td><td>/admin/dishes/:id/edit</td><td>Hiển thị form sửa</td></tr>
+            <tr><td>PATCH</td><td>/admin/dishes/:id</td><td>Cập nhật món</td></tr>
+            <tr><td>GET / DELETE</td><td>/admin/dishes/:id/delete<br>/admin/dishes/:id</td><td>Xác nhận rồi xóa</td></tr>
+          </tbody>
+        </table>
+        <p class="lead">Chef và Ingredient áp dụng cùng một mẫu CRUD tương ứng.</p>
+      </article>
+
+      <article class="slide" data-title="Chef và Ingredient">
+        <div class="eyebrow">08 · Reuse pattern</div>
+        <h2>Cùng một contract, ba đối tượng</h2>
+        <div class="three-col">
+          <div class="panel"><span class="number">DISH</span><h3>Món ăn</h3><p><code>name</code>, <code>description</code>, <code>price</code>, <code>category</code>, <code>available</code></p></div>
+          <div class="panel"><span class="number">CHEF</span><h3>Đầu bếp</h3><p><code>name</code>, <code>specialty</code></p></div>
+          <div class="panel"><span class="number">INGREDIENT</span><h3>Nguyên liệu</h3><p><code>name</code>, <code>unit</code></p></div>
+        </div>
+        <div class="steps">
+          <div class="step">Mỗi model có list, form thêm, form sửa và trang xác nhận xóa.</div>
+          <div class="step">Controller validate và chỉ ghi các field được whitelist.</div>
+          <div class="step">Tất cả thao tác ghi đều dùng redirect 303.</div>
+          <div class="step">Các trường hợp ID sai và bản ghi thiếu trả 404.</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Method override">
+        <div class="eyebrow">09 · HTTP methods</div>
+        <h2>Form HTML vẫn biểu diễn được PATCH và DELETE</h2>
+        <div class="two-col">
+          <div><div class="code-label">Form cập nhật</div><pre>&lt;form method="POST"
+  action="/admin/dishes/2?_method=PATCH"&gt;</pre></div>
+          <div><div class="code-label">Form xóa</div><pre>&lt;form method="POST"
+  action="/admin/dishes/2?_method=DELETE"&gt;</pre></div>
+        </div>
+        <div class="panel" style="margin-top:16px"><p><code>app.use(methodOverride('_method'))</code> nằm trước router. Server chuyển method logic để khớp với <code>router.patch</code> và <code>router.delete</code>. Không cần AJAX.</p></div>
+      </article>
+
+      <article class="slide" data-title="Validation">
+        <div class="eyebrow">10 · Boundary validation</div>
+        <h2>Dữ liệu được kiểm tra trước khi chạm database</h2>
+        <div class="three-col">
+          <div class="panel"><span class="number">01</span><h3>Chuỗi</h3><p>Trim và từ chối tên, mô tả hoặc danh mục rỗng.</p></div>
+          <div class="panel"><span class="number">02</span><h3>Giá</h3><p>Chỉ nhận số nguyên hữu hạn, lớn hơn hoặc bằng 0.</p></div>
+          <div class="panel"><span class="number">03</span><h3>Whitelist</h3><p>Chỉ truyền field được phép vào Prisma, không truyền thẳng toàn bộ body.</p></div>
+        </div>
+        <pre style="margin-top:16px">Input sai → HTTP 400 → render lại form → giữ giá trị đã nhập → hiển thị lỗi</pre>
+      </article>
+
+      <article class="slide" data-title="PRG và status">
+        <div class="eyebrow">11 · POST / Redirect / GET</div>
+        <h2>Không submit lại POST khi reload</h2>
+        <div class="flow">
+          <div><b>POST</b><span>Form gửi dữ liệu</span></div><div class="arrow">→</div>
+          <div><b>GHI DB</b><span>Controller tạo/sửa/xóa</span></div><div class="arrow">→</div>
+          <div><b>303</b><span>Location tới URL GET</span></div><div class="arrow">→</div>
+          <div><b>GET</b><span>Render trang kết quả</span></div>
+        </div>
+        <div class="two-col">
+          <div class="panel"><h3>Đạt yêu cầu</h3><p>Tất cả create, update và delete dùng <code>res.redirect(303, ...)</code>.</p></div>
+          <div class="panel"><h3>Ý nghĩa</h3><p>Reload chỉ gửi GET, giảm nguy cơ tạo bản ghi trùng do submit lại form.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Lỗi và seed">
+        <div class="eyebrow">12 · Reliability</div>
+        <h2>Lỗi rõ ràng, seed có chủ ý</h2>
+        <div class="two-col">
+          <div class="panel"><span class="number">404 / 500</span><h3>Tách đúng loại lỗi</h3><p>404 dành cho URL hoặc bản ghi không tồn tại. 500 dùng view lỗi máy chủ riêng và không leak chi tiết database.</p></div>
+          <div class="panel"><span class="number">SEED</span><h3>Không reset nhầm</h3><p>Seed destructive chỉ chạy khi có <code>ALLOW_DESTRUCTIVE_SEED=true</code>, tránh xóa dữ liệu mà không có xác nhận.</p></div>
+        </div>
+        <pre style="margin-top:16px">$env:ALLOW_DESTRUCTIVE_SEED="true"; npm run prisma:seed</pre>
+      </article>
+
+      <article class="slide" data-title="Đối chiếu đề bài">
+        <div class="eyebrow">13 · Checklist nghiệm thu</div>
+        <h2>Yêu cầu đã được tích hợp</h2>
+        <table>
+          <thead><tr><th>Yêu cầu</th><th>Implementation</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            <tr><td>SSR nhiều trang</td><td>Express + EJS + route riêng</td><td class="ok">ĐẠT</td></tr>
+            <tr><td>Database và ORM</td><td>Supabase PostgreSQL + Prisma</td><td class="ok">ĐẠT</td></tr>
+            <tr><td>Params và query</td><td>/menu/:id và /menu?q=...</td><td class="ok">ĐẠT</td></tr>
+            <tr><td>CRUD</td><td>Dish, Chef, Ingredient</td><td class="ok">ĐẠT</td></tr>
+            <tr><td>PATCH / DELETE</td><td>method-override từ HTML form</td><td class="ok">ĐẠT</td></tr>
+            <tr><td>Validation / 404 / 500</td><td>400, 404 và view lỗi riêng</td><td class="ok">ĐẠT</td></tr>
+            <tr><td>Authentication admin</td><td>Chưa triển khai trong phạm vi bài</td><td class="note">GHI CHÚ</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="slide" data-title="Demo">
+        <div class="eyebrow">14 · Kịch bản demo</div>
+        <h2>Trình bày bằng một luồng liền mạch</h2>
+        <div class="steps">
+          <div class="step">Mở <code>/</code>, giới thiệu trang chủ đã tách khỏi thực đơn.</div>
+          <div class="step">Đi tới <code>/menu</code>, tìm “phở” và giải thích query parameter.</div>
+          <div class="step">Mở <code>/menu/:id</code>, reload để chứng minh path parameter.</div>
+          <div class="step">Vào admin, thêm một món và chỉ ra status 303 sau POST.</div>
+          <div class="step">Sửa món, giải thích method override PATCH.</div>
+          <div class="step">Xóa món qua trang xác nhận, giải thích DELETE và PRG.</div>
+          <div class="step">Nhập giá sai để minh họa HTTP 400 và sticky form.</div>
+          <div class="step">Mở schema và controller để liên kết giao diện với code.</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Kết luận">
+        <div class="eyebrow">15 · Kết luận</div>
+        <h2>SSR biến request thành trải nghiệm có thể kiểm chứng</h2>
+        <div class="rule"></div>
+        <p class="lead">Restaurantly đã tích hợp các kiến thức trọng tâm của Block 5: route nhiều trang, database thật, Prisma ORM, CRUD, form HTML, validation, xử lý lỗi và POST/Redirect/GET.</p>
+        <div class="panel" style="max-width:760px; margin-top:32px"><p><strong>Điểm cần ghi nhớ:</strong> route khớp URL, controller quyết định dữ liệu, ORM giao tiếp với database, còn EJS render dữ liệu thành HTML cho browser.</p></div>
+        <p class="meta">CẢM ƠN · SẴN SÀNG DEMO</p>
+      </article>
+    </section>
+
+    <nav class="controls" aria-label="Điều khiển slide">
+      <button id="prev" type="button" aria-label="Slide trước">←</button>
+      <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+      <button id="next" type="button" aria-label="Slide tiếp">→</button>
+      <span class="hint">← → / Space · M mục lục · F toàn màn hình</span>
+    </nav>
+  </main>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const count = document.getElementById('slideCount');
+      const progress = document.getElementById('progressBar');
+      const toc = document.getElementById('toc');
+      const tocGrid = document.getElementById('tocGrid');
+      let current = 0;
+
+      slides.forEach((slide, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = `${String(index + 1).padStart(2, '0')}  ${slide.dataset.title}`;
+        button.addEventListener('click', () => { go(index); toc.classList.remove('open'); });
+        tocGrid.appendChild(button);
+      });
+
+      function go(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+        count.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        history.replaceState(null, '', `#${current + 1}`);
+      }
+
+      document.getElementById('prev').addEventListener('click', () => go(current - 1));
+      document.getElementById('next').addEventListener('click', () => go(current + 1));
+      document.getElementById('tocToggle').addEventListener('click', () => toc.classList.add('open'));
+      document.getElementById('closeToc').addEventListener('click', () => toc.classList.remove('open'));
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'PageDown') { event.preventDefault(); go(current + 1); }
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); go(current - 1); }
+        if (event.key === 'Home') { event.preventDefault(); go(0); }
+        if (event.key === 'End') { event.preventDefault(); go(slides.length - 1); }
+        if (event.key.toLowerCase() === 'm') toc.classList.toggle('open');
+        if (event.key.toLowerCase() === 'f') document.documentElement.requestFullscreen?.();
+        if (event.key === 'Escape') toc.classList.remove('open');
+      });
+
+      const initial = Number.parseInt(location.hash.slice(1), 10);
+      go(Number.isInteger(initial) && initial > 0 ? initial - 1 : 0);
+    })();
+  </script>
+</body>
+</html>
