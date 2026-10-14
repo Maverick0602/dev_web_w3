@@ -7,9 +7,10 @@ function validateAndSanitizeDish(body) {
   const description = typeof body.description === 'string' ? body.description.trim() : '';
   const category = typeof body.category === 'string' ? body.category.trim() : '';
   const priceRaw = body.price;
-  const price = typeof priceRaw === 'string' && priceRaw.trim() !== ''
-    ? Number(priceRaw)
-    : NaN;
+  const parsedPrice = typeof priceRaw === 'string' && priceRaw.trim() !== ''
+    ? Number(priceRaw.trim())
+    : (typeof priceRaw === 'number' ? priceRaw : NaN);
+  const price = Number.isFinite(parsedPrice) ? Math.round(parsedPrice) : NaN;
   // Checkbox trong HTML form gửi 'on' khi checked, hoặc boolean/string 'true'
   const available = body.available === 'on' || body.available === 'true' || body.available === true;
 
@@ -22,7 +23,7 @@ function validateAndSanitizeDish(body) {
   if (!category) {
     errors.push('Danh mục món ăn không được để trống.');
   }
-  if (!Number.isFinite(price) || !Number.isInteger(price) || price < 0) {
+  if (!Number.isFinite(price) || price < 0) {
     errors.push('Giá món ăn phải là số nguyên hợp lệ lớn hơn hoặc bằng 0.');
   }
 
@@ -31,7 +32,7 @@ function validateAndSanitizeDish(body) {
     data: {
       name,
       description,
-      price,
+      price: isNaN(price) ? 0 : price,
       category,
       available
     }
